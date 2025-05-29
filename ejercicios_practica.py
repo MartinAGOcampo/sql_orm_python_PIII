@@ -61,6 +61,7 @@ def create_schema():
 
 def fill():
     print('Completemos esta tablita!')
+    print('...')
     # Llenar la tabla de la secundaria con al munos 2 tutores
     # Cada tutor tiene los campos:
     # id --> este campo es auto incremental por lo que no deberá completarlo
@@ -70,14 +71,14 @@ def fill():
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    # Crear tutores
-    Tutor1 = Tutor(name='Rosa')
-    Tutor2 = Tutor(name='Jose')
+    tutor1 = Tutor(name='Marcos Rojo')
+    tutor2 = Tutor(name='Lautaro Martinez')
+    tutor3 = Tutor(name='Diego Costas')
+
+    session.add_all([tutor1, tutor2, tutor3])
+    session.commit()
 
     # Agregar tutores
-    session.add(Tutor1)
-    session.add(Tutor2)
-    session.commit()
     
     # Llenar la tabla de la secundaria con al menos 5 estudiantes
     # Cada estudiante tiene los posibles campos:
@@ -89,39 +90,39 @@ def fill():
 
      # Crear estudiantes
 
-    Estudiante1 = Estudiante(name='Marcos',age=34,grade=1,tutor_id=2)
-    Estudiante2 = Estudiante(name='Jose',age=22,grade=1,tutor_id=2)
-    Estudiante3 = Estudiante(name='Maria',age=32,grade=2,tutor_id=2)
-    Estudiante4 = Estudiante(name='Carolina',age=33,grade=1,tutor_id=1)
-    Estudiante5 = Estudiante(name='Juan',age=19,grade=2,tutor_id=2)
-    
-    # Agregar estudiantes
-    session.add(Estudiante1)
-    session.add(Estudiante2)
-    session.add(Estudiante3)
-    session.add(Estudiante4)
-    session.add(Estudiante5)
+    estudiante1 = Estudiante(name = "Lucas Ocampos", age = 31, grade = 1, tutor_id = 1)
+    estudiante2 = Estudiante(name = "Leonardo Ponzio", age = 44, grade = 2, tutor_id = 1)
+    estudiante3 = Estudiante(name = "Antonio Rios", age = 64, grade = 3, tutor_id = 3)
+    estudiante4 = Estudiante(name = "Victor Diaz", age = 21, grade = 2, tutor_id = 3)
+    estudiante5 = Estudiante(name = "Marcos Acuña", age = 23, grade = 1, tutor_id = 3)
+    estudiante6 = Estudiante(name = "Sebastian Saja", age = 45, grade = 3, tutor_id = 2)
+    estudiante7 = Estudiante(name = "Diego Milito", age = 42, grade = 2, tutor_id = 2)
+
+    session.add_all([estudiante1, estudiante2, estudiante3, estudiante4, estudiante5, estudiante6, estudiante7])
     session.commit()
+
+    print('Tabla creada con exito ! ')
+    print()
 
     # No olvidarse que antes de poder crear un estudiante debe haberse
     # primero creado el tutor.
 
 
 def fetch():
-    print('Comprovemos su contenido, ¿qué hay en la tabla?')
+    print('Comprobemos su contenido, ¿qué hay en la tabla?')
     # Crear una query para imprimir en pantalla
-    # todos los objetos creaods de la tabla estudiante.
+    # todos los objetos creados de la tabla estudiante.
     # Imprimir en pantalla cada objeto que traiga la query
     # Realizar un bucle para imprimir de una fila a la vez
-
+    print()
     Session = sessionmaker(bind=engine)
     session = Session()
-
-    query = session.query(Estudiante).order_by(Estudiante.id.desc())
-
-    for estudiante in query:
+    consul_estudiante = session.query(Estudiante).all()
+    for estudiante in consul_estudiante:
         print(estudiante)
 
+    print('**Estos son todos los estudiantes de la tabla Estudiantes.**')
+    print()
 
 def search_by_tutor(tutor):
     print('Operación búsqueda!')
@@ -135,14 +136,21 @@ def search_by_tutor(tutor):
 
     Session = sessionmaker(bind=engine)
     session = Session()
+    estudiantes = (session.query(Estudiante).join(Tutor).filter(Tutor.name == tutor).all())
 
-    query = session.query(Estudiante).join(Estudiante.tutor).filter(Tutor.name == tutor)
+    if estudiantes:
+        print(f"Estudiantes asignados a {tutor}:")
+        for estudiante in estudiantes:
+            print(f"- {estudiante.name}")
+    else:
+        print("No se encontraron estudiantes con ese tutor.")
+    print()
+        
 
-    for estudiante in query:
-        print('Estudiantes de', tutor, estudiante)
 
-def modify(id, name):
+def modify(estudiante_nombre, nuevo_tutor_nombre):
     print('Modificando la tabla')
+    print()
     # Deberá actualizar el tutor de un estudiante, cambiarlo para eso debe
     # 1) buscar con una query el tutor por "tutor.name" usando name
     # pasado como parámetro y obtener el objeto del tutor
@@ -156,19 +164,12 @@ def modify(id, name):
 
     Session = sessionmaker(bind=engine)
     session = Session()
-    
-    query = session.query(Tutor).filter(Tutor.name == name )
-    idtutor = query.first()
-    
-    query = session.query(Estudiante).filter(Estudiante.id == id)
-    estudiantemod = query.first()
-   
-    estudiantemod.tutor = idtutor
-    
-    session.add(estudiantemod)
+    estudiante_obj = session.query(Estudiante).filter(Estudiante.name == estudiante_nombre).first()
+    tutor_obj = session.query(Tutor).filter(Tutor.name == nuevo_tutor_nombre).first()
+    estudiante_obj.tutor_id = tutor_obj.id
     session.commit()
-
-    print('Persona actualizada', name)
+    print(f"Estudiante {estudiante_obj.name} ahora tiene como tutor a {tutor_obj.name}")
+    print()
 
 def count_grade(grade):
     print('Estudiante por grado')
@@ -182,24 +183,52 @@ def count_grade(grade):
     Session = sessionmaker(bind=engine)
     session = Session()
 
-    result = session.query(Estudiante).filter(Estudiante.grade == grade).count()
-    print('Estudiantes en grado:', grade, 'encontradas:', result)
+    conteo = session.query(Estudiante).filter(Estudiante.grade == grade).count()
+    print('Estudiantes en grado:', grade, 'encontradas:', conteo)
 
 if __name__ == '__main__':
     print("Bienvenidos a otra clase con Python")
-    create_schema()   # create and reset database (DB)
+    create_schema()   
     
     fill()
+    
     fetch()
 
-    tutor = 'Rosa'
-    search_by_tutor(tutor)
+    print('Para revisar que estudiantes estan asignados a cada tutor ingresa el nombre del tutor')
+    print('Recordemos que valores tenemos en la tabla "Tutor"')
+    Session = sessionmaker(bind=engine)
+    session = Session()
+    consul_tutor = session.query(Tutor.id, Tutor.name).all()
+    tutor_nombres = [tutor.name for tutor in consul_tutor]
+    for tutor in consul_tutor:
+        print(tutor)
+    while True:
+        ingreso_manual = input('Ingresa el nombre del tutor que quieres consultar (Conviene copiar y pegar): ')
+        if ingreso_manual not in tutor_nombres:
+            print("Por favor, ingresa uno de los nombres de tutor mostrados arriba.")
+            continue
+        break
+    print()
+    search_by_tutor(ingreso_manual)
 
-    nuevo_tutor = 'Rosa'
-    id = 3
-    modify(id, nuevo_tutor)
+    print('Teniendo en cuenta el listado de tutores demostrado recientemente, vamos a modificar al tutor de Sebastian Saja')
+    nuevo_tutor = input('Ingrese el nombre del nuevo tutor: ')
+    modify("Sebastian Saja", nuevo_tutor)
 
     fetch()
+    
+    
+    while True:
+        try:
+            entrada_grade = input('Ingresa el grade por el que quieres consultar, los disponibles son 1, 2 y 3: ')
+            if entrada_grade not in ['1', '2', '3']:
+                print("Por favor, ingresa solo 1, 2 o 3.")
+                continue
+            entrada_grade = int(entrada_grade)
+            break
+        except ValueError:
+            print("Entrada inválida. Debe ser un número (1, 2 o 3).")
+    count_grade(entrada_grade)
 
-    grade = 2
-    count_grade(grade)
+    print('Fin del trabajo. Gracias')
+    
